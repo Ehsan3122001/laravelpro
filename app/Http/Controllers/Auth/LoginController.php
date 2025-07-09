@@ -38,11 +38,20 @@ class LoginController extends Controller
     }
     protected function redirectTo()
     {
-        if (auth()->user()->hasRole('admin')) {
+        $user = auth()->user();
+
+        if ($user->type === 'admin') {
             return '/dashboard';
         }
 
-        return '/home';
+        if ($user->type === 'student' || $user->type === 'teacher') {
+            return '/index';
+        }
+
+        return '/index';
     }
+
+
+
 
 }

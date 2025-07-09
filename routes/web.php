@@ -1,14 +1,16 @@
 <?php
 
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
-use App\Http\Controllers\CurriculumController;
+use App\Http\Controllers\SiteController;
+use App\Http\Controllers\UserController;
 use App\Http\Controllers\GoogleController;
 use App\Http\Controllers\PayPalController;
 use App\Http\Controllers\StripeController;
-use Illuminate\Support\Facades\Route;
-use Illuminate\Support\Facades\Auth;
+use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\DashboardController;
-
+use App\Http\Controllers\CurriculumController;
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -21,32 +23,24 @@ use App\Http\Controllers\DashboardController;
 */
 
 
-
-Route::get('/', function () {
-    return redirect('/dashboard');
-});
-
 Auth::routes();
 
-Route::get('/dashboard', [DashboardController::class, 'index'])->middleware('auth')->name('dashboard');
-Route::resource('courses', App\Http\Controllers\CourseController::class)->middleware(['auth', 'role:admin']);
-
-Route::get('stripe', [StripeController::class, 'stripe']);
-Route::post('stripe', [StripeController::class, 'addMoneyViaStripe'])->name('stripe.post');
-Route::get('go-payment', [PayPalController::class, 'goPayment'])->name('payment.go');
-
-Route::get('payment', [PayPalController::class, 'payment'])->name('payment');
-Route::get('cancel', [PayPalController::class, 'cancel'])->name('payment.cancel');
-Route::get('payment/success', [PayPalController::class, 'success'])->name('payment.success');
-Route::get('tt', function () {
-    return view("google");
-});
-Route::get("redirectToGoogle", [GoogleController::class, "redirectToGoogle"]);
-Route::get("handleGoogleCallback", [GoogleController::class, "handleGoogleCallback"]);
-Route::any('/{any}', function ($id) {
-    return view("welcome");
+Route::middleware(['auth', 'role:admin'])->group(function () {
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    Route::resource('/dashboard/courses', App\Http\Controllers\CourseController::class);
+    Route::resource('categories', CategoryController::class);
+    Route::get('/dashboard/users/students', [UserController::class, 'students'])->name('admin.users.students');
+    Route::post('/admin/users/{id}/deactivate', [UserController::class, 'deactivate'])->name('admin.users.deactivate');
+    Route::get('/dashboard/users/teachers', [UserController::class, 'teachers'])->name('admin.users.teachers');
 });
 
-Auth::routes();
+Route::middleware(['auth', 'role:student|teacher'])->group(function () {
+    Route::get('/index', [SiteController::class, 'index'])->name('site.index');
+});
 
-Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
+Route::get('/', [SiteController::class, 'index'])->name('site.index');
+Route::get('/team', [SiteController::class, 'team'])->name('site.team');
+Route::get('/testimonial', [SiteController::class, 'testimonial'])->name('site.testimonial');
+Route::get('/about', [SiteController::class, 'about'])->name('site.about');
+Route::get('/contact', [SiteController::class, 'contact'])->name('site.contact');
+Route::get('/courses', [SiteController::class, 'courses'])->name('site.courses');

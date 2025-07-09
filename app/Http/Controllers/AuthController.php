@@ -28,6 +28,7 @@ class AuthController extends Controller
             'email' => 'required|string|email',
             'password' => 'required|string',
         ]);
+
         $credentials = $request->only('email', 'password');
 
         $token = Auth::attempt($credentials);
@@ -39,232 +40,127 @@ class AuthController extends Controller
         }
 
         $user = Auth::user();
-        if ($user->role->name == "student") {
-            $info =  $user->student;
+        $role = $user->role->name ?? null;
 
-            $user->money;
+        // Get role-specific info
+        $info = null;
+        switch ($role) {
+            case 'student':
+                $info = $user->student;
+                break;
+            case 'admin':
+                $info = $user->admin;
+                break;
+            case 'teacher':
+                $info = $user->teacher;
+                break;
+            case 'employee':
+                $info = $user->employee;
+                break;
+            case 'marketer':
+                $info = $user->marketer;
+                break;
         }
-        if ($user->role->name == "admin") {
-            $info = $user->admin;
-        }
-        if ($user->role->name == "teacher") {
-            $info = $user->teacher;
-        }
-        if ($user->role->name == "employee") {
-            $info =  $user->employee;
-        }
-        if ($user->role->name == "marketer") {
 
-            $info =  $user->marketer;
-        }
+        // تحديد المسار حسب الدور
+        $redirectTo = match ($role) {
+            'admin' => '/dashboard',
+            'student', 'teacher' => '/index',
+            default => '/'
+        };
+
+
         return response()->json([
             'status' => 'success',
             'user' => $user->email,
-            "info" => $info,
-            "mony" => $user->money ?? null,
-            "role" => $user->role->name,
+            'info' => $info,
+            'mony' => $user->money ?? null,
+            'role' => $role,
+            'redirect_to' => $redirectTo,
             'authorisation' => [
                 'token' => $token,
-
             ]
         ]);
     }
+
 
     public function register(Request $request)
     {
-
         $request->validate([
             'email' => 'required|string|email|max:255|unique:users',
-            'password' => 'required|string|min:6',
-            "first_name" => "required|string|min:2",
-            "last_name" => "required|string|min:2",
-            "biographical" => "string|min:2",
-            "facebook" => "url|min:2",
-            "twitter" => "url|min:2",
-            "youtube" => "url|min:2",
-            "linkedin" => "url|min:2",
-            "gender" => "boolean",
-            'image' => 'mimes:jpeg,jpg,png,gif|max:10000'
+            'password' => 'required|string|min:6|confirmed',
+            'role' => 'required|string|in:student,teacher,admin,marketer,employee',
+            'first_name' => 'nullable|string|min:2',
+            'last_name' => 'nullable|string|min:2',
+            'biographical' => 'nullable|string|min:2',
+            'facebook' => 'nullable|url',
+            'twitter' => 'nullable|url',
+            'youtube' => 'nullable|url',
+            'linkedin' => 'nullable|url',
+            'gender' => 'nullable|boolean',
+            'image' => 'nullable|mimes:jpeg,jpg,png,gif|max:10000'
         ]);
 
-        $role = Role::where("name", "=", "student")->first();
-        if (!$role) {
-            $role = Role::create(["name" => "student"]);
-        }
-        $email = strtolower($request->email);
+        $roleName = $request->role;
+        $role = Role::firstOrCreate(['name' => $roleName]);
+
         $user = User::create([
-            'email' => $email,
+            'email' => strtolower($request->email),
             'password' => Hash::make($request->password),
-            "role_id" => $role->id
+            'role_id' => $role->id
         ]);
-        $student = new Student();
 
-        $student->first_name = $request->first_name;
-        $student->last_name = $request->last_name;
-        $student->biographical = $request->biographical ?? null;
-        $student->facebook = $request->facebook ?? null;
-        $student->twitter = $request->twitter ?? null;
-        $student->youtube = $request->youtube ?? null;
-        $student->linkedin = $request->linkedin ?? null;
-        $student->gender = $request->gender ?? null;
-        $student->user_id = $user->id;
-        $student->created_at = now();
-        $student->updated_at = now();
-        $student->save();
-        if (isset($request->image)) {
-            $student->addMediaFromRequest("image")
-                ->sanitizingFileName(function ($fileName) {
-                    return strtolower(str_replace(['#', '/', '\\', ' '], '-', $fileName));
-                })
-                ->toMediaCollection();
+        $info = null;
+
+        switch ($roleName) {
+            case 'student':
+                $student = Student::create([
+                    'user_id' => $user->id,
+                    'first_name' => $request->first_name,
+                    'last_name' => $request->last_name,
+                    'biographical' => $request->biographical,
+                    'facebook' => $request->facebook,
+                    'twitter' => $request->twitter,
+                    'youtube' => $request->youtube,
+                    'linkedin' => $request->linkedin,
+                    'gender' => $request->gender
+                ]);
+                Money::create(['student_id' => $user->id]);
+                $info = $student;
+
+                if ($request->hasFile('image')) {
+                    $student->addMediaFromRequest('image')
+                            ->sanitizingFileName(fn($fileName) => strtolower(str_replace(['#', '/', '\\', ' '], '-', $fileName)))
+                            ->toMediaCollection();
+                }
+                break;
+
+            case 'teacher':
+                $info = Teacher::create(['user_id' => $user->id]);
+                break;
+
+            case 'admin':
+                $info = Admin::create(['user_id' => $user->id]);
+                break;
+
+            case 'marketer':
+                $info = Marketer::create(['user_id' => $user->id]);
+                break;
+
+            case 'employee':
+                $info = Employee::create(['user_id' => $user->id]);
+                break;
         }
-        Money::create([
-            "student_id" => $user->id
-        ]);
+
         $token = Auth::login($user);
-        $info =  $user->student;
+
         return response()->json([
             'status' => 'success',
             'user' => $user->email,
-            "info" => $info,
-            "role" => $user->role->name,
+            'info' => $info,
+            'role' => $roleName,
             'authorisation' => [
                 'token' => $token,
-
-            ]
-        ]);
-    }
-
-    function createAdmin(Request $request)
-    {
-        $request->validate([
-
-            'email' => 'required|string|email|max:255|unique:users',
-            'password' => 'required|string|min:6',
-        ]);
-        $role = Role::where("name", "=", "admin")->first();
-        if (!$role) {
-            $role = Role::create(["name" => "admin"]);
-        }
-        $email = strtolower($request->email);
-
-        $user = User::create([
-
-            'email' => $email,
-            'password' => Hash::make($request->password),
-            "role_id" => $role->id
-        ]);
-        $admin = Admin::create(["user_id" => $user->id]);
-        $token = Auth::login($user);
-        $info = $user->admin;
-        return response()->json([
-            'status' => 'success',
-            'user' => $user->email,
-            "info" => $info,
-            "role" => $user->role->name,
-            'authorisation' => [
-                'token' => $token,
-
-            ]
-        ]);
-    }
-    function createMarketer(Request $request)
-    {
-        $request->validate([
-
-            'email' => 'required|string|email|max:255|unique:users',
-            'password' => 'required|string|min:6',
-        ]);
-        $role = Role::where("name", "=", "marketer")->first();
-        if (!$role) {
-            $role = Role::create(["name" => "marketer"]);
-        }
-        $email = strtolower($request->email);
-
-        $user = User::create([
-
-            'email' => $email,
-            'password' => Hash::make($request->password),
-            "role_id" => $role->id
-        ]);
-        $Marketer = Marketer::create(["user_id" => $user->id]);
-
-        $token = Auth::login($user);
-        $info = $user->marketer;
-        return response()->json([
-            'status' => 'success',
-            'user' => $user->email,
-            "info" => $info,
-            "role" => $user->role->name,
-            'authorisation' => [
-                'token' => $token,
-
-            ]
-        ]);
-    }
-    function createTeacher(Request $request)
-    {
-        $request->validate([
-
-            'email' => 'required|string|email|max:255|unique:users',
-            'password' => 'required|string|min:6',
-        ]);
-        $role = Role::where("name", "=", "teacher")->first();
-        if (!$role) {
-            $role = Role::create(["name" => "teacher"]);
-        }
-        $email = strtolower($request->email);
-
-        $user = User::create([
-
-            'email' => $email,
-            'password' => Hash::make($request->password),
-            "role_id" => $role->id
-        ]);
-        $Teacher = Teacher::create(["user_id" => $user->id]);
-        $token = Auth::login($user);
-        $info = $user->teacher;
-        return response()->json([
-            'status' => 'success',
-            'user' => $user->email,
-            "info" => $info,
-            "role" => $user->role->name,
-            'authorisation' => [
-                'token' => $token,
-
-            ]
-        ]);
-    }
-    function createEmployee(Request $request)
-    {
-        $request->validate([
-
-            'email' => 'required|string|email|max:255|unique:users',
-            'password' => 'required|string|min:6',
-        ]);
-        $role = Role::where("name", "=", "employee")->first();
-        if (!$role) {
-            $role = Role::create(["name" => "employee"]);
-        }
-        $email = strtolower($request->email);
-
-        $user = User::create([
-            'email' => $email,
-            'password' => Hash::make($request->password),
-            "role_id" => $role->id
-        ]);
-        $Employee = Employee::create(["user_id" => $user->id]);
-
-        $token = Auth::login($user);
-        $info = $user->employee;
-        return response()->json([
-            'status' => 'success',
-            'user' => $user->email,
-            "info" => $info,
-            "role" => $user->role->name,
-            'authorisation' => [
-                'token' => $token,
-
             ]
         ]);
     }

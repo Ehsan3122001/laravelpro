@@ -10,27 +10,25 @@ class DatabaseSeeder extends Seeder
 {
     public function run()
     {
-        // إنشاء الأدوار
-        $adminRole = Role::create(['name' => 'admin']);
-        $studentRole = Role::create(['name' => 'student']);
+        $this->call(RoleSeeder::class);
 
-        // إنشاء مستخدم مسؤول
-        $admin = User::create([
-            'name' => 'Admin User',
+        $adminRole = Role::where('name', 'admin')->first();
+        $studentRole = Role::where('name', 'student')->first();
+
+        $admin = User::firstOrCreate([
             'email' => 'admin@example.com',
+        ], [
+            'name' => 'Admin User',
             'password' => bcrypt('password'),
         ]);
-
-        // تعيين الدور للمستخدم
         $admin->assignRole($adminRole);
 
-        // (اختياري) مستخدم طالب
-        $student = User::create([
-            'name' => 'Student User',
+        $student = User::firstOrCreate([
             'email' => 'student@example.com',
+        ], [
+            'name' => 'Student User',
             'password' => bcrypt('password'),
         ]);
-
         $student->assignRole($studentRole);
     }
 }

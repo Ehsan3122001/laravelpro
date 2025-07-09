@@ -2,27 +2,44 @@
 
 @section('content')
 <div class="container">
-    <h2 class="mb-4">إضافة دورة جديدة</h2>
+    <h2 class="mb-4">Add New Course</h2>
 
     <form method="POST" action="{{ route('courses.store') }}">
         @csrf
 
         <div class="form-group">
-            <label>اسم الدورة</label>
+            <label>Course Name </label>
             <input type="text" name="name" class="form-control" required>
         </div>
 
         <div class="form-group">
-            <label>السعر</label>
+            <label>Price</label>
             <input type="number" name="cost" class="form-control" required>
         </div>
 
         <div class="form-group">
-            <label>ID المعلم</label>
-            <input type="number" name="teacher_id" class="form-control" required>
+            <label>Teacher</label>
+            {{-- <input type="number" name="teacher_id" value="{{ $course->teacher_id }}" class="form-control" required> --}}
+            <select name="teacher_id" class="form-control" id="" required>
+                @foreach ($users as $user)
+                    @if ($user->type === 'teacher')
+                        <option value="{{ $user->id }}">{{ $user->name }}</option>
+                    @endif
+                @endforeach
+            </select>
         </div>
 
-        <button type="submit" class="btn btn-success mt-2">حفظ</button>
+        <div class="form-group">
+            <label>Category</label>
+            {{-- <input type="number" name="teacher_id" value="{{ $course->teacher_id }}" class="form-control" required> --}}
+            <select name="category_id" class="form-control" id="" required>
+                @foreach ($categories as $category)
+                    <option value="{{ $category->id }}">{{ $category->name }}</option>
+                @endforeach
+            </select>
+        </div>
+
+        <button type="submit" class="btn btn-success mt-2">Save</button>
     </form>
 </div>
 @endsection
