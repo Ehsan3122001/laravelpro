@@ -15,8 +15,6 @@
         <thead>
             <tr>
                 <th>Name</th>
-                <th>Price</th>
-                <th>Teacher</th>
                 <th>Actions</th>
             </tr>
         </thead>
@@ -24,8 +22,6 @@
             @foreach($categories as $category)
             <tr>
                 <td>{{ $category->name }}</td>
-                <td>{{ $category->cost }}</td>
-                <td>{{ $category->teacher->name ?? 'Unkown' }}</td>
                 <td>
                     <a href="{{ route('categories.edit', $category->id) }}" class="btn btn-sm btn-warning">Edit</a>
                     <form action="{{ route('categories.destroy', $category->id) }}" method="POST" style="display:inline;">

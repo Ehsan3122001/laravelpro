@@ -12,16 +12,17 @@ return new class extends Migration
      * @return void
      */
     public function up()
-{
-    Schema::create('courses', function (Blueprint $table) {
-        $table->id();
-        $table->string('name');
-        $table->double('cost');
-        $table->foreignId('teacher_id')->constrained()->onDelete('cascade');
-        $table->integer('category_id')->nullable(); // مش واضح العلاقة، ممكن تعدل لاحقًا
-        $table->timestamps();
-    });
-}
+    {
+        Schema::create('courses', function (Blueprint $table) {
+            $table->id();
+            $table->string('name');
+            $table->double('cost');
+            $table->foreignId('teacher_id')->constrained('users')->onDelete('cascade');
+            $table->foreignId('category_id')->constrained('categories')->onDelete('cascade');
+            $table->timestamps();
+        });
+    }
+
 
 
     /**

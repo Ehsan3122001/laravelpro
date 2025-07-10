@@ -7,39 +7,37 @@
     <form method="POST" action="{{ route('courses.store') }}">
         @csrf
 
-        <div class="form-group">
-            <label>Course Name </label>
+        <div class="form-group mb-3">
+            <label>Course Name</label>
             <input type="text" name="name" class="form-control" required>
         </div>
 
-        <div class="form-group">
-            <label>Price</label>
+        <div class="form-group mb-3">
+            <label>Cost</label>
             <input type="number" name="cost" class="form-control" required>
         </div>
 
-        <div class="form-group">
-            <label>Teacher</label>
-            {{-- <input type="number" name="teacher_id" value="{{ $course->teacher_id }}" class="form-control" required> --}}
-            <select name="teacher_id" class="form-control" id="" required>
-                @foreach ($users as $user)
-                    @if ($user->type === 'teacher')
-                        <option value="{{ $user->id }}">{{ $user->name }}</option>
-                    @endif
-                @endforeach
-            </select>
-        </div>
-
-        <div class="form-group">
+        <div class="form-group mb-3">
             <label>Category</label>
-            {{-- <input type="number" name="teacher_id" value="{{ $course->teacher_id }}" class="form-control" required> --}}
-            <select name="category_id" class="form-control" id="" required>
+            <select name="category_id" class="form-control" required>
+                <option value="" disabled selected>Choose Category</option>
                 @foreach ($categories as $category)
                     <option value="{{ $category->id }}">{{ $category->name }}</option>
                 @endforeach
             </select>
         </div>
 
-        <button type="submit" class="btn btn-success mt-2">Save</button>
+        <div class="form-group mb-3">
+            <label>Teacher</label>
+            <select name="teacher_id" class="form-control" required>
+                <option value="" disabled selected>Choose Teacher</option>
+                @foreach ($teachers as $teacher)
+                    <option value="{{ $teacher->id }}">{{ $teacher->name }}</option>
+                @endforeach
+            </select>
+        </div>
+
+        <button type="submit" class="btn btn-success">Save Course</button>
     </form>
 </div>
 @endsection

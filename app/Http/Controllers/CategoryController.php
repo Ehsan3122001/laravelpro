@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Category;
+use App\Models\Course;
+use App\Models\User;
 use Illuminate\Http\Request;
 
 class CategoryController extends Controller
@@ -15,8 +17,12 @@ class CategoryController extends Controller
 
     public function create()
     {
-        return view('categories.create');
+        $courses = Course::all();
+        $users = User::all();
+        $categories = Category::all();
+        return view('categories.create', compact('courses', 'categories', 'users'));
     }
+
 
     public function store(Request $request)
     {
@@ -31,7 +37,10 @@ class CategoryController extends Controller
 
     public function edit(Category $category)
     {
-        return view('categories.edit', compact('category'));
+        $courses = Course::all();
+        $users = User::all();
+        $categories = Category::all();
+        return view('categories.edit', compact('category','courses', 'users'));
     }
 
     public function update(Request $request, Category $category)

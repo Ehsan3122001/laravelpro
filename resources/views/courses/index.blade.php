@@ -15,8 +15,9 @@
         <thead>
             <tr>
                 <th>Name</th>
-                <th>Price</th>
+                <th>Cost</th>
                 <th>Teacher</th>
+                <th>Category</th>
                 <th>Actions</th>
             </tr>
         </thead>
@@ -26,12 +27,13 @@
                 <td>{{ $course->name }}</td>
                 <td>{{ $course->cost }}</td>
                 <td>{{ $course->teacher->name ?? 'Unkown' }}</td>
+                <td>{{ $course->category->name ?? 'Unkown' }}</td>
                 <td>
-                    <a href="{{ route('courses.edit', $course->id) }}" class="btn btn-sm btn-warning">تعديل</a>
+                    <a href="{{ route('courses.edit', $course->id) }}" class="btn btn-sm btn-warning">Edit</a>
                     <form action="{{ route('courses.destroy', $course->id) }}" method="POST" style="display:inline;">
                         @csrf
                         @method('DELETE')
-                        <button class="btn btn-sm btn-danger" onclick="return confirm('هل أنت متأكد؟')">حذف</button>
+                        <button class="btn btn-sm btn-danger" onclick="return confirm('Are You Sure ?')">Delete</button>
                     </form>
                 </td>
             </tr>
