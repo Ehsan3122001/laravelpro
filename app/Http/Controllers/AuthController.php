@@ -65,7 +65,7 @@ class AuthController extends Controller
         // تحديد المسار حسب الدور
         $redirectTo = match ($role) {
             'admin' => '/dashboard',
-            'student', 'teacher' => '/index',
+            'student', 'teacher' => '/',
             default => '/'
         };
 
